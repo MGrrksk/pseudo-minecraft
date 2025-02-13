@@ -1,44 +1,25 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
+#include <window.hpp>
+#include <graphics/engine.hpp>
+#include <cstdio>
 
 int main() {
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return -1;
+    // Initialization of the window and the graphics engine.
+    Window window(124, 78, "Pseudo Minecraft", GraphicsEngine::windowSetup);
+    GraphicsEngine engine(window.glfwPointer());
+    // Some variables for performance measurement.
+    unsigned long long frames = 0;
+    double start = glfwGetTime();
+    // Main loop.
+    while (window.opened()) {
+        engine.update();
+        window.update();
+        frames++;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Purple Screen", NULL, NULL);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-    glViewport(0, 0, 800, 600);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    while (!glfwWindowShouldClose(window)) {
-        processInput(window);
-        glClearColor(0.5f, 0.0f, 0.5f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-    glfwTerminate();
+    // Printing the average time per frame in milliseconds.
+    double millis = (glfwGetTime() - start) / frames * 1000;
+    printf("Average ms per frame: ");
+    if (millis > 33.33) printf("\033[1;31m%fms\033[0m\n", millis); // If less than 30FPS, print red.
+    else if (millis > 16.67) printf("\033[1;33m%fms\033[0m\n", millis); // If less than 60FPS, print yellow.
+    else printf("\033[1;32m%fms\033[0m\n", millis); // If 60FPS or more, print green.
     return 0;
 }
