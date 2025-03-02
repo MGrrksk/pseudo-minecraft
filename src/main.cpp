@@ -2,24 +2,59 @@
 #include <graphics/engine.hpp>
 #include <cstdio>
 
-int main() {
+void _main() {
     // Initialization of the window and the graphics engine.
-    Window window(124, 78, "Pseudo Minecraft", GraphicsEngine::windowSetup);
+    Window window(1024, 768, "Pseudo Minecraft", GraphicsEngine::windowSetup);
     GraphicsEngine engine(window.glfwPointer());
-    // Some variables for performance measurement.
+    engine.applyShaders("assets/shaders/vertex.glsl", "assets/shaders/fragment.glsl");
+    // Adding meshes.
+    float vertices1[] = {
+        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0,
+        -0.5,  0.5, 0.0, 0.0, 0.0, 1.0,
+         0.0, -0.5, 0.0, 0.0, 0.0, 1.0,
+    };
+    Mesh mesh1(vertices1, sizeof(vertices1), MESH_ATTR_POSITION | MESH_ATTR_COLOR);
+    engine.addMesh(&mesh1);
+    float vertices2[] = {
+        0.5,  0.5, 0.0, 0.0, 1.0, 0.0,
+        0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
+        0.0,  0.5, 0.0, 0.0, 1.0, 0.0,
+    };
+    Mesh mesh2(vertices2, sizeof(vertices2), MESH_ATTR_POSITION | MESH_ATTR_COLOR);
+    engine.addMesh(&mesh2);
+    // Some variables for speed tracking.
+    double lastFrame = glfwGetTime();
+    double delta;
     unsigned long long frames = 0;
-    double start = glfwGetTime();
+    double millis = 0;
     // Main loop.
     while (window.opened()) {
+        // Timing
+        delta = glfwGetTime() - lastFrame;
+        lastFrame += delta;
+        millis += delta;
+        frames++;
+        // Updating
         engine.update();
         window.update();
-        frames++;
     }
-    // Printing the average time per frame in milliseconds.
-    double millis = (glfwGetTime() - start) / frames * 1000;
-    printf("Average ms per frame: ");
-    if (millis > 33.33) printf("\033[1;31m%fms\033[0m\n", millis); // If less than 30FPS, print red.
-    else if (millis > 16.67) printf("\033[1;33m%fms\033[0m\n", millis); // If less than 60FPS, print yellow.
-    else printf("\033[1;32m%fms\033[0m\n", millis); // If 60FPS or more, print green.
+    // Printing the average time per frame & FPS.
+    double mspf = millis / frames * 1000;
+    int fps = 1000 / mspf;
+    const char* color;
+    if (fps < 30) color = "\033[1;31m"; // red
+    else if (fps < 60) color = "\033[1;33m"; // yellow
+    else color = "\033[1;32m"; // green
+    printf("Average time per frame: %s%fms\033[0m\n", color, mspf);
+    printf("Average FPS: %s%d\033[0m\n", color, fps);
+}
+
+int main() {
+    try {
+        _main();
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Error: %s\n", e.what());
+        return 1;
+    }
     return 0;
 }
